@@ -294,12 +294,35 @@
    * @return {Document} The current document instance
    */
   pub.doc = function(doc) {
-    if (doc instanceof Document) {
-      setCurrDoc(doc);
+    if (typeof doc === 'string') {
+      var path = doc.substring(0,1) === "/" ?
+        getUserHomePath()+doc:
+        getUserHomePath()+"/"+doc;
+      var file = File(path);
+      if(!file.exists) {
+        warning("File: "+doc+" doesn't exist in "+path);
+        return false;
+      }
+      doc=app.open(file);
     }
+    else if (!(doc instanceof Document)) {
+      try {
+        doc = app.activeDocument;
+      } catch(e) {
+        doc = app.documents.add();
+      }
+    }
+    setCurrDoc(doc);
     return currentDoc();
   };
 
+  
+  var getUserHomePath = function() {
+    return ($.os.substring(0, 7)=="Windows") ? 
+      $.getenv("USERPROFILE"):
+      $.getenv("HOME");
+  }
+  
   /**
    * Closes the current document.
    *
@@ -2365,7 +2388,6 @@
    * @method go
    */
   pub.go = function() {
-    currentDoc();
     runSetup();
     runDrawOnce();
   };
@@ -2391,7 +2413,6 @@
       error('Add #targetengine "loop"; at the very top of your script.');
     }
 
-    currentDoc();
     runSetup();
 
     var idleTask = app.idleTasks.add({name: "basil_idle_task", sleep: sleep});
@@ -2469,7 +2490,7 @@
       try {
         doc = app.activeDocument;
       } catch(e) {
-        doc = app.documents.add();
+        error("No open document found! Open or create a document with b.doc()");
       }
       setCurrDoc(doc);
     }
