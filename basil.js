@@ -330,6 +330,7 @@
       try {
         tempPage.id;
       } catch (e) {
+        warning("Page "+page+" doesn't exist");
         return false;
       }
       currPage = tempPage;
