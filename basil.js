@@ -1505,9 +1505,10 @@
     if (file instanceof File) {
       result = file;
     } else {
-      var folder = new Folder(projectPath().absoluteURI + '/data');
-      folder.create(); // creates data folder if not existing, otherwise it just skips
-      result = new File(folder.absoluteURI + '/' + file);
+      var path = file.substring(0,1) === "/" ?
+        getUserHomePath()+file:
+        getUserHomePath()+"/"+file;
+      result = new File(path);
     }
     if (mustExist && !result.exists) {
       error('The file "' + result + '" does not exist.');
@@ -1520,7 +1521,10 @@
     if (file instanceof File) {
       result = file;
     } else {
-      result = new File(projectPath().absoluteURI + '/' + file);
+      var path = file.substring(0,1) === "/" ?
+        getUserHomePath()+file:
+        getUserHomePath()+"/"+file;
+      result = new File(path);
     }
     if (mustExist && !result.exists) {
       error('The file "' + result + '" does not exist.');
