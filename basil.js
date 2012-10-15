@@ -2395,7 +2395,15 @@
     runSetup();
     runDrawOnce();
   };
-
+  pub.setup  = function(f) {
+    runSetup(f);
+  }
+  pub.draw = function(f) {
+    runDrawOnce(f);    
+  }
+  // pub.loop = function(f) {
+  //   runDrawLoop(f);    
+  // }
   /**
    * EXPERIMENTAL!
    *
@@ -2457,17 +2465,23 @@
     currFillTint = 100;
   };
 
-  var runSetup = function() {
+  var runSetup = function(f) {
     app.doScript(function() {
-      if (typeof glob.setup === 'function') {
+      if(typeof f === 'function') {
+        f.call(pub, b);
+      }
+      else if (typeof glob.setup === 'function') {
         glob.setup();
       }
     }, ScriptLanguage.javascript, undef, UndoModes.entireScript);
   };
 
-  var runDrawOnce = function() {
+  var runDrawOnce = function(f) {
     app.doScript(function() {
-      if (typeof glob.draw === 'function') {
+      if(typeof f === 'function') {
+        f.call(pub, b);
+      }
+      else if (typeof glob.draw === 'function') {
         glob.draw();
       }
     }, ScriptLanguage.javascript, undef, UndoModes.entireScript);
