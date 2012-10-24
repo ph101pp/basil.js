@@ -464,6 +464,46 @@
   // ----------------------------------------
   // Data
 
+/*
+ * From: jQuery JavaScript Library v1.7.1 http://jquery.com/
+ * Function validates and parses a String as JSON-Object.
+ * 
+ * @method parseJSON()
+ * @param  {String} String to be parsed as JSON-object.
+ * @return {Object} Returns JSON-Object or throws an error if invalid JSON has been provided.
+*/ 
+ pub.parseJSON = function( data ) {
+    if ( typeof data !== "string" || !data ) {
+      return null;
+    }
+
+    //trim data.. not sure if needed..
+//    data = pub.trim(data);
+   
+    // Attempt to parse using the native JSON parser first
+    try {
+      return JSON.parse( data );
+    }
+    catch(e) {
+      warning("JSON Library not found! Json validation and parsing would be faster if you would use the json2.js library: www.basiljs.ch/json2");
+    }
+    var rvalidchars = /^[\],:{}\s]*$/,
+      rvalidescape = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g,
+      rvalidtokens = /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,
+      rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g;
+
+    // Make sure the incoming data is actual JSON
+    // Logic borrowed from http://json.org/json2.js
+    if ( rvalidchars.test( data.replace( rvalidescape, "@" )
+      .replace( rvalidtokens, "]" )
+      .replace( rvalidbraces, "")) ) {
+
+      return ( new Function( "return " + data ) )();
+
+    }
+    error( "Invalid JSON: " + data );
+  };
+
   // -- Conversion --
   pub.binary = function(num, numBits) {
     var bit;
@@ -1075,6 +1115,24 @@
     }
   };
 
+  /**
+   * Converts a hex color definition to a RGB color definition
+   * 
+   * @method hexToRgb
+   * @param  {Hex Color} h   Color Definition in Hex Format (i.e. #FFFFFF)
+   * @return {Object} Object with r,g and b values
+   */
+  pub.hexToRgb = function(h) {
+    function hexToR(h) {return parseInt((cutHex(h)).substring(0,2),16)}
+    function hexToG(h) {return parseInt((cutHex(h)).substring(2,4),16)}
+    function hexToB(h) {return parseInt((cutHex(h)).substring(4,6),16)}
+    function cutHex(h) {return (h.charAt(0)=="#") ? h.substring(1,7):h}
+    return {
+      r : hexToR(h),
+      g : hexToG(h),
+      b : hexToB(h)
+    }
+  }
   /**
    * Calculates a color or colors between two color at a specific increment. 
    * The amt parameter is the amount to interpolate between the two values where 0.0 equal to the first point, 0.1 is very near the first point, 0.5 is half-way in between, etc.
