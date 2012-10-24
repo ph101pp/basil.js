@@ -294,12 +294,35 @@
    * @return {Document} The current document instance
    */
   pub.doc = function(doc) {
-    if (doc instanceof Document) {
-      setCurrDoc(doc);
+    if (typeof doc === 'string') {
+      var path = doc.substring(0,1) === "/" ?
+        getUserHomePath()+doc:
+        getUserHomePath()+"/"+doc;
+      var file = File(path);
+      if(!file.exists) {
+        warning("File: "+doc+" doesn't exist in "+path);
+        return false;
+      }
+      doc=app.open(file);
     }
+    else if (!(doc instanceof Document)) {
+      try {
+        doc = app.activeDocument;
+      } catch(e) {
+        doc = app.documents.add();
+      }
+    }
+    setCurrDoc(doc);
     return currentDoc();
   };
 
+  
+  var getUserHomePath = function() {
+    return ($.os.substring(0, 7)=="Windows") ? 
+      $.getenv("USERPROFILE"):
+      $.getenv("HOME");
+  }
+  
   /**
    * Closes the current document.
    *
@@ -320,7 +343,7 @@
    *
    * @method page
    * @param  {Page|Number} [page] The page or page index to set the current page to
-   * @return {Page} The current page instance
+   * @return {Page} The current page instance or false if the Page doesn't exists
    */
   pub.page = function(page) {
     if (page instanceof Page) {
@@ -330,7 +353,8 @@
       try {
         tempPage.id;
       } catch (e) {
-        error('Page ' + page + ' does not exist.');
+        warning("Page "+page+" doesn't exist");
+        return false;
       }
       currPage = tempPage;
     }
@@ -1092,6 +1116,24 @@
   };
 
   /**
+   * Converts a hex color definition to a RGB color definition
+   * 
+   * @method hexToRgb
+   * @param  {Hex Color} h   Color Definition in Hex Format (i.e. #FFFFFF)
+   * @return {Object} Object with r,g and b values
+   */
+  pub.hexToRgb = function(h) {
+    function hexToR(h) {return parseInt((cutHex(h)).substring(0,2),16)}
+    function hexToG(h) {return parseInt((cutHex(h)).substring(2,4),16)}
+    function hexToB(h) {return parseInt((cutHex(h)).substring(4,6),16)}
+    function cutHex(h) {return (h.charAt(0)=="#") ? h.substring(1,7):h}
+    return {
+      r : hexToR(h),
+      g : hexToG(h),
+      b : hexToB(h)
+    }
+  }
+  /**
    * Calculates a color or colors between two color at a specific increment. 
    * The amt parameter is the amount to interpolate between the two values where 0.0 equal to the first point, 0.1 is very near the first point, 0.5 is half-way in between, etc.
    * N.B.: Both color must be either CMYK or RGB.
@@ -1521,9 +1563,10 @@
     if (file instanceof File) {
       result = file;
     } else {
-      var folder = new Folder(projectPath().absoluteURI + '/data');
-      folder.create(); // creates data folder if not existing, otherwise it just skips
-      result = new File(folder.absoluteURI + '/' + file);
+      var path = file.substring(0,1) === "/" ?
+        getUserHomePath()+file:
+        getUserHomePath()+"/"+file;
+      result = new File(path);
     }
     if (mustExist && !result.exists) {
       error('The file "' + result + '" does not exist.');
@@ -1536,7 +1579,10 @@
     if (file instanceof File) {
       result = file;
     } else {
-      result = new File(projectPath().absoluteURI + '/' + file);
+      var path = file.substring(0,1) === "/" ?
+        getUserHomePath()+file:
+        getUserHomePath()+"/"+file;
+      result = new File(path);
     }
     if (mustExist && !result.exists) {
       error('The file "' + result + '" does not exist.');
@@ -2404,11 +2450,18 @@
    * @method go
    */
   pub.go = function() {
-    currentDoc();
     runSetup();
     runDrawOnce();
   };
-
+  pub.setup  = function(f) {
+    runSetup(f);
+  }
+  pub.draw = function(f) {
+    runDrawOnce(f);    
+  }
+  // pub.loop = function(f) {
+  //   runDrawLoop(f);    
+  // }
   /**
    * EXPERIMENTAL!
    *
@@ -2430,7 +2483,6 @@
       error('Add #targetengine "loop"; at the very top of your script.');
     }
 
-    currentDoc();
     runSetup();
 
     var idleTask = app.idleTasks.add({name: "basil_idle_task", sleep: sleep});
@@ -2471,17 +2523,23 @@
     currFillTint = 100;
   };
 
-  var runSetup = function() {
+  var runSetup = function(f) {
     app.doScript(function() {
-      if (typeof glob.setup === 'function') {
+      if(typeof f === 'function') {
+        f.call(pub, b);
+      }
+      else if (typeof glob.setup === 'function') {
         glob.setup();
       }
     }, ScriptLanguage.javascript, undef, UndoModes.entireScript);
   };
 
-  var runDrawOnce = function() {
+  var runDrawOnce = function(f) {
     app.doScript(function() {
-      if (typeof glob.draw === 'function') {
+      if(typeof f === 'function') {
+        f.call(pub, b);
+      }
+      else if (typeof glob.draw === 'function') {
         glob.draw();
       }
     }, ScriptLanguage.javascript, undef, UndoModes.entireScript);
@@ -2508,7 +2566,7 @@
       try {
         doc = app.activeDocument;
       } catch(e) {
-        doc = app.documents.add();
+        error("No open document found! Open or create a document with b.doc()");
       }
       setCurrDoc(doc);
     }
