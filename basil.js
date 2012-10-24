@@ -1116,6 +1116,24 @@
   };
 
   /**
+   * Converts a hex color definition to a RGB color definition
+   * 
+   * @method hexToRgb
+   * @param  {Hex Color} h   Color Definition in Hex Format (i.e. #FFFFFF)
+   * @return {Object} Object with r,g and b values
+   */
+  pub.hexToRgb = function(h) {
+    function hexToR(h) {return parseInt((cutHex(h)).substring(0,2),16)}
+    function hexToG(h) {return parseInt((cutHex(h)).substring(2,4),16)}
+    function hexToB(h) {return parseInt((cutHex(h)).substring(4,6),16)}
+    function cutHex(h) {return (h.charAt(0)=="#") ? h.substring(1,7):h}
+    return {
+      r : hexToR(h),
+      g : hexToG(h),
+      b : hexToB(h)
+    }
+  }
+  /**
    * Calculates a color or colors between two color at a specific increment. 
    * The amt parameter is the amount to interpolate between the two values where 0.0 equal to the first point, 0.1 is very near the first point, 0.5 is half-way in between, etc.
    * N.B.: Both color must be either CMYK or RGB.
